@@ -1,0 +1,56 @@
+{
+  "name": "B3D - Amministrazione - Avvisi Fiscali",
+  "nodes": [
+    {
+      "parameters": {"rule": {"interval": [{"field": "cronExpression", "expression": "0 8 * * *"}]}},
+      "name": "Ogni giorno alle 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "url": "http://192.168.1.143:8200/api/v1/avvisi",
+        "sendHeaders": true,
+        "headerParameters": {"parameters": [{"name": "Authorization", "value": "Bearer INCOLLA_QUI_B3D_TOKEN_LETTURA"}]},
+        "options": {}
+      },
+      "name": "Leggi avvisi b3d-fisco",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose"},
+          "conditions": [{"leftValue": "={{ $json.numero }}", "rightValue": 0, "operator": {"type": "number", "operation": "gt"}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Ci sono avvisi?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "chatId": "-1003590383949",
+        "text": "={{ $json.messaggio }}",
+        "additionalFields": {"message_thread_id": 1332, "disable_web_page_preview": true}
+      },
+      "name": "Telegram - topic Amministrazione",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [660, -80]
+    }
+  ],
+  "connections": {
+    "Ogni giorno alle 08:00": {"main": [[{"node": "Leggi avvisi b3d-fisco", "type": "main", "index": 0}]]},
+    "Leggi avvisi b3d-fisco": {"main": [[{"node": "Ci sono avvisi?", "type": "main", "index": 0}]]},
+    "Ci sono avvisi?": {"main": [[{"node": "Telegram - topic Amministrazione", "type": "main", "index": 0}], []]}
+  },
+  "settings": {"executionOrder": "v1", "timezone": "Europe/Rome"},
+  "tags": []
+}

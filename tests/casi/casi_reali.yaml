@@ -1,0 +1,23 @@
+# Casi reali per il collaudo del Traguardo 1 (criteri di accettazione della specifica).
+# Compilare con i numeri confermati dallo Studio ABR. NON committare dati personali (CF, IBAN).
+# Quando è compilato, aggiungere un test in tests/test_motore.py che lo legga.
+
+anno: 2026
+inizio_attivita: "2026-09-09"
+fatture:
+  - cliente: "CAIRORCS Media (Festival dello Sport)"
+    totale: "2082.08"          # 2.000 + rivalsa 4% su 2.002 + bollo 2
+    data_incasso: null          # dall'estratto conto Finom
+  - cliente: "CAIRORCS Media (proroga 16/10–18/12, PO 2126006760)"
+    totale: null
+    data_incasso: null
+  - cliente: "DB (montaggio video)"
+    totale: null
+    data_incasso: null
+atteso_dallo_studio:
+  ricavi: null
+  reddito: null
+  contributi_gs: null
+  imposta: null
+  versamento_30_giugno_2027: null
+  versamento_30_novembre_2027: null

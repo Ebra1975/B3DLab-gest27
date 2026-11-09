@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B3D Lab · Cruscotto fiscale</title>
+<style>
+:root{--bg:#f6f7f5;--card:#fff;--ink:#1d2320;--quiet:#5f6a64;--line:#dfe3e0;--acc:#17784a;--warn:#b5462f;--chip:#eef3ef}
+@media (prefers-color-scheme:dark){:root{--bg:#121513;--card:#1b201d;--ink:#e8ece9;--quiet:#9aa69f;--line:#2c332f;--acc:#4cc38a;--warn:#ef7d63;--chip:#222a25}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:2}
+header h1{font-size:16px;margin:0}nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{background:none;border:0;color:var(--quiet);padding:6px 10px;border-radius:8px;cursor:pointer;font:inherit}
+nav button.on{background:var(--chip);color:var(--ink);font-weight:600}
+main{max-width:980px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:start}
+.kpi small{color:var(--quiet);display:block}.kpi b{font-size:22px}
+table{width:100%;border-collapse:collapse}td,th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--quiet);font-weight:500;font-size:13px}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+input,select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);max-width:100%}
+button.p{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer}
+button.s{background:none;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:5px 10px;font:inherit;cursor:pointer}
+.info{background:none;border:1px solid var(--line);border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;color:var(--quiet);margin-left:6px}
+.traccia{background:var(--chip);border-radius:8px;padding:8px 12px;margin-top:6px;font-size:13px}
+.traccia div{display:flex;justify-content:space-between;gap:12px;padding:3px 0}
+.warn{color:var(--warn)}.ok{color:var(--acc)}.quiet{color:var(--quiet)}.stima{font-size:12px;color:var(--quiet);border:1px dashed var(--line);border-radius:6px;padding:1px 6px}
+.bar{height:10px;background:var(--chip);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--acc)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hidden{display:none}#msg{position:fixed;bottom:16px;left:16px;right:16px;max-width:560px;margin:auto;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;display:none}
+.table-wrap{overflow-x:auto}
+</style>
+</head>
+<body>
+<header>
+  <h1>B3D Lab · Cruscotto fiscale</h1>
+  <nav id="nav">
+    <button data-v="riepilogo" class="on">Riepilogo</button>
+    <button data-v="fatture">Fatture</button>
+    <button data-v="scadenze">Scadenze</button>
+    <button data-v="impostazioni">Impostazioni</button>
+  </nav>
+</header>
+<main>
+  <section id="login" class="card hidden">
+    <h2>Accesso</h2>
+    <div class="row"><input id="pw" type="password" placeholder="Password"><button class="p" onclick="accedi()">Entra</button></div>
+  </section>
+
+  <section id="v-riepilogo">
+    <div class="card row"><label>Anno <input id="anno" type="number" style="width:100px"></label><span class="quiet">Interfaccia provvisoria del Traguardo 1</span></div>
+    <div id="kpi" class="grid"></div>
+    <div class="card" id="soglia"></div>
+    <div class="card table-wrap" id="lm"></div>
+  </section>
+
+  <section id="v-fatture" class="hidden">
+    <div class="card">
+      <h2>Importa fatture XML</h2>
+      <p class="quiet">File .xml, .p7m o lo zip scaricato da Fatture e Corrispettivi. Prima vedi il riepilogo, poi confermi.</p>
+      <div class="row"><input id="file" type="file" multiple accept=".xml,.p7m,.zip"><button class="p" onclick="anteprima()">Anteprima</button></div>
+      <div id="anteprima"></div>
+    </div>
+    <div class="card table-wrap"><h2>Fatture</h2><div id="fatture"></div></div>
+  </section>
+
+  <section id="v-scadenze" class="hidden">
+    <div class="card table-wrap"><h2>Scadenze</h2><label class="row"><input type="checkbox" id="tutte"> mostra anche quelle pagate</label><div id="scadenze"></div><p class="quiet" id="cal"></p></div>
+    <div class="card hidden" id="f24"></div>
+  </section>
+
+  <section id="v-impostazioni" class="hidden">
+    <div class="card">
+      <h2>Profilo fiscale</h2>
+      <div class="grid" id="profilo"></div>
+      <p><button class="p" onclick="salvaProfilo()">Salva profilo</button></p>
+    </div>
+    <div class="card table-wrap">
+      <h2>Parametri <span class="quiet" id="anno-par"></span></h2>
+      <p class="quiet">Modificando un valore vedi prima l'effetto sui totali; poi confermi. Ogni modifica resta nello storico.</p>
+      <div id="parametri"></div>
+    </div>
+  </section>
+</main>
+<div id="msg"></div>
+<script>
+const API='/api/v1';let TOKEN=localStorageGet('b3d-token');
+function localStorageGet(k){try{return localStorage.getItem(k)}catch{return null}}
+function localStorageSet(k,v){try{localStorage.setItem(k,v)}catch{}}
+const eur=x=>Number(x).toLocaleString('it-IT',{style:'currency',currency:'EUR'});
+const ceur=c=>eur(c/100);
+const gg=d=>d?d.split('-').reverse().join('/'):'';
+const $=id=>document.getElementById(id);
+function msg(t){const m=$('msg');m.textContent=t;m.style.display='block';setTimeout(()=>m.style.display='none',5000)}
+async function api(path,opt={}){
+  opt.headers=Object.assign({},opt.headers||{},TOKEN?{Authorization:'Bearer '+TOKEN}:{});
+  if(opt.json){opt.body=JSON.stringify(opt.json);opt.headers['Content-Type']='application/json';delete opt.json}
+  const r=await fetch(API+path,opt);
+  if(r.status===401){$('login').classList.remove('hidden');throw new Error('accesso')}
+  const t=await r.text();let d;try{d=JSON.parse(t)}catch{d=t}
+  if(!r.ok){const e=(d&&(d.errore||d.detail))||t;msg(typeof e==='string'?e:JSON.stringify(e));throw new Error(e)}
+  return d;
+}
+async function accedi(){const d=await api('/auth/login',{method:'POST',json:{password:$('pw').value}});TOKEN=d.token;localStorageSet('b3d-token',TOKEN);$('login').classList.add('hidden');carica()}
+function traccia(v){return '<div class="traccia">'+v.traccia.map(p=>`<div><span>${p.etichetta}<br><small class="quiet">${p.formula}${Object.keys(p.valori).length?' · '+Object.entries(p.valori).map(([k,x])=>k+' '+x).join(', '):''}</small></span><b>${eur(p.risultato)}</b></div>`).join('')+'</div>'}
+function voce(titolo,v){const id='t'+Math.random().toString(36).slice(2);return `<div class="card kpi"><small>${titolo} ${v.stima?'<span class="stima">stima</span>':''}</small><b>${eur(v.importo)}</b><button class="info" title="come si arriva a questa cifra" onclick="$('${id}').classList.toggle('hidden')">i</button><div id="${id}" class="hidden">${traccia(v)}</div></div>`}
+// ---- viste
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('on',x===b));['riepilogo','fatture','scadenze','impostazioni'].forEach(v=>$('v-'+v).classList.toggle('hidden',v!==b.dataset.v));carica()});
+$('anno').value=new Date().getFullYear();$('anno').onchange=carica;$('tutte').onchange=carica;
+async function carica(){
+  const vista=document.querySelector('#nav .on').dataset.v;
+  try{
+    if(vista==='riepilogo')await riepilogo();
+    if(vista==='fatture')await fatture();
+    if(vista==='scadenze')await scadenze();
+    if(vista==='impostazioni')await impostazioni();
+  }catch(e){if(String(e.message).includes('profilo')){document.querySelector('[data-v=impostazioni]').click()}}
+}
+async function riepilogo(){
+  const a=$('anno').value,r=await api(`/anni/${a}/riepilogo`);
+  $('kpi').innerHTML=voce('Incassato',r.ricavi)+voce('Reddito forfettario',r.reddito)+voce('Contributi Gestione Separata',r.contributi_gs)+voce('Imposta sostitutiva ('+(r.aliquota_imposta*100)+'%)',r.imposta)+`<div class="card kpi"><small>Da incassare</small><b>${eur(r.da_incassare)}</b></div>`;
+  const s=r.soglia,p=Math.min(100,Number(s.percentuale));
+  quadroLm(a);
+  $('soglia').innerHTML=`<h2>Soglia dei ricavi</h2><div class="bar"><i style="width:${p}%"></i></div><p>${eur(s.ricavi)} su ${eur(s.limite.importo)} (${Number(s.percentuale).toLocaleString('it-IT')}%) · margine ${eur(s.margine)} <button class="info" onclick="this.nextElementSibling.classList.toggle('hidden')">i</button><span class="hidden">${traccia(s.limite)}</span></p>${s.stato!=='dentro'?`<p class="warn">Attenzione: ${s.stato==='uscita_immediata'?'superati 100.000 €: uscita immediata dal forfettario':'soglia superata: dal prossimo anno regime ordinario'}</p>`:''}${s.proiezione_supera_limite?`<p class="warn">Con le fatture ancora da incassare (${eur(s.proiezione_con_da_incassare)}) supereresti il limite.</p>`:''}`;
+}
+async function quadroLm(a){
+  try{const q=await api(`/anni/${a}/quadro-lm`);
+  $('lm').innerHTML=`<h2>Valori per il quadro LM ${q.stima?'<span class="stima">stima</span>':''}</h2><p class="quiet">${q.nota}</p><table><tr><th>Rigo</th><th>Attività</th><th class="n">Ricavi</th><th class="n">Coeff.</th><th class="n">Reddito</th></tr>${q.attivita.map(r=>`<tr><td>${r.rigo}</td><td>${r.codice_attivita}</td><td class="n">${eur(r.ricavi)}</td><td class="n">${r.coefficiente}</td><td class="n">${eur(r.reddito)}</td></tr>`).join('')}</table><table>${q.totali.map(t=>`<tr><td>${t.rigo}</td><td>${t.voce}</td><td class="n">${eur(t.importo)}</td></tr>`).join('')}</table>`}catch{$('lm').innerHTML=''}
+}
+async function fatture(){
+  const f=await api('/fatture');
+  $('fatture').innerHTML=f.length?`<table><tr><th>Data</th><th>N.</th><th>Cliente</th><th class="n">Totale</th><th class="n">Da incassare</th><th></th></tr>${f.map(x=>`<tr><td>${gg(x.data)}</td><td>${x.tipo==='TD04'?'NC ':''}${x.numero}</td><td>${x.cliente||''}</td><td class="n">${ceur(x.totale_cent)}</td><td class="n ${x.residuo_cent?'':'ok'}">${x.residuo_cent?ceur(x.residuo_cent):'incassata'}</td><td>${x.residuo_cent?`<div class="row"><input type="date" id="d${x.id}" value="${new Date().toISOString().slice(0,10)}"><input id="i${x.id}" style="width:110px" value="${(x.residuo_cent/100).toFixed(2).replace('.',',')}"><button class="s" onclick="incassa(${x.id})">Incassata</button></div>`:''}</td></tr>`).join('')}</table>`:'<p class="quiet">Nessuna fattura: importa gli XML qui sopra.</p>';
+}
+async function incassa(id){
+  const imp=Math.round(Number($('i'+id).value.replace(/\./g,'').replace(',','.'))*100);
+  const r=await api(`/fatture/${id}/incassi`,{method:'POST',json:{data:$('d'+id).value,importo_cent:imp}});
+  const a=r.accantonamento;msg(`Da mettere da parte: ${eur(a.da_mettere_da_parte.importo)} (contributi ${eur(a.contributi_gs)}, imposta ${eur(a.imposta)}, bollo ${eur(a.bollo)}). Ti restano ${eur(a.netto_disponibile)}.`);fatture();
+}
+let ANTE=null;
+async function anteprima(){
+  const fd=new FormData();for(const f of $('file').files)fd.append('files',f);
+  const r=await api('/import/anteprima',{method:'POST',body:fd});ANTE=r.id;
+  $('anteprima').innerHTML=`<table><tr><th>Data</th><th>N.</th><th>Cliente</th><th class="n">Totale</th><th>Note</th></tr>${r.fatture.map(f=>`<tr><td>${gg(f.data)}</td><td>${f.numero}</td><td>${f.cliente_denominazione}</td><td class="n">${ceur(f.totale_cent)}</td><td>${f.duplicata?'<span class="quiet">già presente</span>':''}${f.avvisi.map(a=>`<div class="warn">${a}</div>`).join('')}</td></tr>`).join('')}</table>${r.errori.map(e=>`<p class="warn">${e}</p>`).join('')}<p><button class="p" onclick="conferma()">Conferma import</button></p>`;
+}
+async function conferma(){const r=await api('/import/conferma',{method:'POST',json:{id:ANTE}});msg(`Salvate: ${r.salvate.length}, saltate: ${r.saltate.length}`);$('anteprima').innerHTML='';fatture()}
+async function scadenze(){
+  const s=await api('/scadenze?da_pagare='+(!$('tutte').checked));
+  $('scadenze').innerHTML=s.length?`<table><tr><th>Data</th><th>Cosa</th><th>Codice</th><th class="n">Importo</th><th></th></tr>${s.map(x=>`<tr><td>${gg(x.data)}</td><td>${x.descrizione} ${x.stima?'<span class="stima">stima</span>':''}<div class="hidden" id="tr-${x.chiave}">${traccia(x)}</div></td><td>${x.codice}</td><td class="n ${Number(x.importo)<0?'ok':''}">${eur(x.importo)}<button class="info" onclick="$('tr-${x.chiave}').classList.toggle('hidden')">i</button></td><td>${x.pagata?'<span class="ok">pagata</span>':`<button class="s" onclick="f24('${x.chiave}')">F24</button> <button class="s" onclick="paga('${x.chiave}',${x.importo})">Pagata</button>`}</td></tr>`).join('')}</table>`:'<p class="quiet">Nessuna scadenza da pagare.</p>';
+  calendarioLink();
+}
+function calendarioLink(){const u=`${location.origin}/api/v1/scadenze.ics?token=${encodeURIComponent(TOKEN||'')}`;$('cal').innerHTML=`Calendario delle scadenze (Apple, Google, Outlook): abbonati a <code style="word-break:break-all">${u}</code> <button class="s" onclick="navigator.clipboard.writeText('${u}').then(()=>msg('Indirizzo copiato'))">Copia</button>`}
+async function f24(chiave){
+  const f=await api(`/scadenze/${chiave}/f24`),el=$('f24');el.classList.remove('hidden');
+  el.innerHTML=`<h2>Facsimile F24 del ${gg(f.scadenza)}</h2><p class="quiet">${f.nota}</p><h3>Sezione Erario</h3><table><tr><th>Codice tributo</th><th>Anno</th><th class="n">Importo</th></tr>${f.sezione_erario.map(r=>`<tr><td>${r.codice_tributo}</td><td>${r.anno_riferimento}</td><td class="n">${eur(r.importo_a_debito)}</td></tr>`).join('')}</table><h3>Sezione INPS</h3><table><tr><th>Sede</th><th>Causale</th><th>Matricola</th><th>Periodo</th><th class="n">Importo</th></tr>${f.sezione_inps.map(r=>`<tr><td>${r.codice_sede}</td><td>${r.causale}</td><td>${r.matricola}</td><td>${r.periodo_da} – ${r.periodo_a}</td><td class="n">${eur(r.importo_a_debito)}</td></tr>`).join('')}</table><p><b>Saldo finale: ${eur(f.saldo_finale)}</b></p>`;el.scrollIntoView({behavior:'smooth'});
+}
+async function paga(chiave,importo){const d=prompt('Data del pagamento (AAAA-MM-GG)',new Date().toISOString().slice(0,10));if(!d)return;await api(`/scadenze/${chiave}/versamenti`,{method:'POST',json:{data:d,importo_cent:Math.round(importo*100)}});scadenze()}
+const CAMPI=[['data_inizio_attivita','Inizio attività','date'],['ateco_primario','ATECO primario','text'],['aliquota_agevolata','Aliquota agevolata 5%','checkbox'],['altra_copertura_previdenziale','Altra copertura previdenziale (24%)','checkbox'],['piva','P.IVA','text'],['codice_fiscale','Codice fiscale','text'],['denominazione','Denominazione','text'],['codice_sede_inps','Codice sede INPS','text'],['matricola_inps','Matricola INPS','text']];
+async function impostazioni(){
+  let p={};try{p=await api('/profilo')}catch{}
+  $('profilo').innerHTML=CAMPI.map(([k,l,t])=>`<label>${l}<br><input id="pf-${k}" type="${t}" ${t==='checkbox'?(p[k]??(k==='aliquota_agevolata'?1:0)?'checked':''):`value="${p[k]??''}"`}></label>`).join('');
+  if(!p.data_inizio_attivita)return;
+  const a=$('anno').value,r=await api(`/impostazioni/${a}`);$('anno-par').textContent=a;
+  $('parametri').innerHTML=`<table><tr><th>Parametro</th><th>Valore</th><th></th></tr>${r.parametri.filter(x=>!Array.isArray(x.valore)&&typeof x.valore!=='object').map(x=>`<tr><td>${x.chiave}${x.modificato?' <span class="stima">modificato</span>':''}</td><td><input id="par-${x.chiave}" value="${x.valore??''}" style="width:140px"></td><td><button class="s" onclick="parametro('${x.chiave}')">Modifica</button></td></tr>`).join('')}</table>`;
+}
+async function salvaProfilo(){
+  const d={valido_dal:new Date().toISOString().slice(0,10)};CAMPI.forEach(([k,,t])=>{const el=$('pf-'+k);d[k]=t==='checkbox'?el.checked:(el.value||null)});
+  await api('/profilo',{method:'PUT',json:d});msg('Profilo salvato');impostazioni();
+}
+async function parametro(chiave){
+  const a=$('anno').value,valore=$('par-'+chiave).value,base={chiave,valore,valido_dal:`${a}-01-01`};
+  const e=await api(`/impostazioni/${a}`,{method:'PUT',json:base}),pr=e.effetto.prima,dp=e.effetto.dopo;
+  if(dp.errore){msg(dp.errore);return}
+  if(confirm(`Effetto della modifica:\nImposta ${eur(pr.imposta)} → ${eur(dp.imposta)}\nContributi ${eur(pr.contributi_gs)} → ${eur(dp.contributi_gs)}\nVersamenti ${eur(pr.versamenti)} → ${eur(dp.versamenti)}\n\nConfermi?`)){await api(`/impostazioni/${a}`,{method:'PUT',json:{...base,conferma:true}});msg('Parametro salvato');impostazioni()}
+}
+carica();
+</script>
+</body>
+</html>

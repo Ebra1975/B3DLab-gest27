@@ -1,0 +1,57 @@
+# Casi di controllo presi da esempi pubblici (video e pagine di flatfour.it, novembre 2026).
+# Servono a verificare che il motore arrivi agli stessi numeri con gli stessi dati.
+# NON sostituiscono la verifica dello Studio ABR sui casi reali (vedi casi_reali.yaml).
+
+accantonamento:
+  - nome: "Fattura 2.000 € + bollo riaddebitato, aliquota 5% (home page flatfour)"
+    incasso: "2002.00"
+    ateco: "70.20.09"
+    anno: 2026
+    inizio_attivita: "2024-03-01"
+    agevolata: true
+    bollo: "2.00"
+    atteso:
+      contributi_gs: "407.10"
+      imposta: "78.08"
+      da_mettere_da_parte: "487.18"
+      netto_disponibile: "1514.82"
+
+anno:
+  - nome: "Primo anno: 20.000 € incassati al 5% (video 'Primo anno: acconti sì o no?')"
+    anno: 2026
+    inizio_attivita: "2026-01-15"
+    agevolata: true
+    incassi: [{data: "2026-06-30", importo: "20000.00", ateco: "70.20.09"}]
+    contributi_versati: "0.00"
+    atteso:
+      reddito: "15600.00"
+      contributi_gs: "4066.92"
+      imposta: "780.00"
+  - nome: "Imposta al 15% dopo i contributi versati (video 'Due calcolatori, due numeri')"
+    anno: 2026
+    inizio_attivita: "2015-01-01"
+    agevolata: false
+    incassi: [{data: "2026-05-10", importo: "30000.00", ateco: "70.20.09"}]
+    contributi_versati: "6100.38"
+    atteso:
+      reddito: "23400.00"
+      contributi_gs: "6100.38"
+      imposta: "2594.94"
+
+versamenti:
+  - nome: "Saldo 2026 e acconti 2027 dopo il primo anno (video 'Primo anno')"
+    anno: 2026
+    imposta: "780.00"
+    contributi: "4066.92"
+    atteso_per_data:
+      "2027-06-30": "6863.69"
+      "2027-11-30": "2016.77"
+  - nome: "Acconti da imposta 983,05 e contributi 7.472,97 (pagina commercialisti flatfour)"
+    anno: 2025
+    imposta: "983.05"
+    contributi: "7472.97"
+    atteso_per_chiave:
+      "acconto-imposta-2026-1": "491.53"
+      "acconto-imposta-2026-2": "491.52"
+      "acconto-gs-2026-1": "2989.19"
+      "acconto-gs-2026-2": "2989.19"

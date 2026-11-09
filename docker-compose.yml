@@ -1,0 +1,13 @@
+services:
+  b3d-fisco:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+    container_name: b3d-fisco
+    restart: unless-stopped
+    ports:
+      - "8200:8200"          # raggiungibile da LAN e Tailscale; NON esporre su Cloudflare nel Traguardo 1
+    env_file: .env
+    volumes:
+      - ./dati:/app/dati      # database SQLite, XML importati, backup
+    mem_limit: 300m

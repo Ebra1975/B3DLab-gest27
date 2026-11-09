@@ -1,0 +1,66 @@
+# Regole del regime forfettario per l'anno d'imposta 2027.
+# Sono i VALORI DI PARTENZA: si modificano dalla pagina Impostazioni (con data di validità).
+# Ogni valore null blocca il calcolo con un errore esplicito.
+anno: 2027
+provvisorio: true   # valori copiati dal 2026: togliere questa riga quando sono verificati
+fonte: >-
+  PROVVISORIO: copia delle regole 2026. Da aggiornare con la circolare INPS 2027 (aliquota,
+  minimale, massimale Gestione Separata) e con eventuali novità della legge di bilancio 2027.
+
+imposta:
+  aliquota_ordinaria: "0.15"
+  aliquota_agevolata: "0.05"
+  anni_agevolata: 5                # anno di inizio + 4 successivi
+  acconto:
+    metodo: storico
+    percentuale: "1.00"            # 100% dell'imposta dell'anno prima
+    rate: ["0.50", "0.50"]         # forfettari: due rate uguali
+    soglia_nessun_acconto: "51.65" # imposta dell'anno prima <= soglia: nessun acconto
+    soglia_rata_unica: "257.52"    # acconto totale < soglia: tutto il 30 novembre
+  codici:
+    saldo: "1792"
+    primo_acconto: "1790"
+    secondo_acconto: "1791"        # anche per l'acconto in rata unica
+
+contributi_gs:
+  aliquota: "0.2607"               # senza altra copertura previdenziale
+  aliquota_altra_copertura: "0.24" # pensionati o iscritti ad altra previdenza obbligatoria
+  minimale_reddito: "18808.00"     # solo per l'accredito dei mesi: nessun contributo minimo fisso
+  massimale_reddito: "122295.00"
+  acconto:
+    percentuale: "0.80"            # 80% dei contributi dell'anno prima
+    rate: ["0.50", "0.50"]         # cioè 40% + 40%
+  causale: "PXX"
+
+coefficienti:                      # per codice ATECO
+  "70.20.09": "0.78"
+  "85.59.20": "0.78"
+  "74.12.09": "0.78"
+  "74.11.10": "0.78"
+
+soglie:
+  ricavi_uscita_anno_dopo: "85000.00"  # ragguagliata ai giorni nel primo anno
+  ricavi_uscita_immediata: "100000.00" # mai ragguagliata
+  avvisi_percentuali: ["0.70", "0.90"]
+
+bollo:
+  importo: "2.00"
+  soglia_fattura: "77.47"
+  soglia_accorpamento: "5000.00"
+  codici: {"1": "2521", "2": "2522", "3": "2523", "4": "2524"}
+
+scadenze:
+  saldo_e_primo_acconto: "06-30"   # mese-giorno, anno successivo a quello d'imposta
+  secondo_acconto: "11-30"
+  bollo: {"1": "05-31", "2": "09-30", "3": "11-30", "4": "02-ultimo"}  # trimestre 4: anno dopo
+
+avvisi:
+  giorni_preavviso: 7              # avviso N giorni prima di ogni scadenza
+
+quadro_lm:                         # etichette dei righi del Modello Redditi PF: verificarle ogni anno sul modello
+  righi_attivita: ["LM22", "LM23", "LM24", "LM25", "LM26", "LM27"]
+  reddito_lordo: "LM34"
+  contributi_dedotti: "LM35"
+  reddito_netto: "LM36"
+  imposta_sostitutiva: "LM39"
+  acconti_versati: "LM45"
